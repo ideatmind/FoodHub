@@ -1,0 +1,35 @@
+<resources>
+
+    <string name="facebook_app_id">476593615490695</string>
+    <string name="fb_login_protocol_scheme">fb1234</string>
+    <string name="facebook_client_token">30d9aa033e8a09aa3f35db2c44a9be0c</string>
+
+
+    <string name="app_name">FoodHub</string>
+    <string name="skip">skip</string>
+    <string name="welcome">Welcome to</string>
+    <string name="foodhub">FoodHub</string>
+    <string name="foodhub_description">Your favourite foods delivered</string>
+    <string name="foodhub_description_end">fast at your door.</string>
+    <string name="already_account">Already have an account?</string>
+    <string name="sign_in">Sign In</string>
+    <string name="sign_with_email">SignUp with email</string>
+    <string name="facebook">FACEBOOK</string>
+    <string name="google">GOOGLE</string>
+    <string name="signIn_tile">sign in with</string>
+    <string name="login">Login</string>
+    <string name="sign_up">SIGN UP</string>
+    <string name="password">Password</string>
+    <string name="email">Email</string>
+    <string name="name">Full Name</string>
+    <string name="sign_up_title">Sign Up</string>
+    <string name="login_title">Login</string>
+    <string name="login_ac">LOGIN</string>
+    <string name="dont_have_an_account">Don\'t have an account?</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="ok">Ok</string>
+    <string name="free_delivery">Free Delivery</string>
+    <string name="minutes">10-15 mins</string>
+    <string name="view_all">View All ></string>
+    <string name="popular_restaurants">Popular Restaurants</string>
+</resources>

@@ -12,3 +12,4 @@ val Pink40 = Color(0xFF7D5260)
 
 val AppColor = Color(0xFFFE724C)
 val AppWhite = Color(0xFFfffefe)
+val Mustard = Color(0xFFFFC529)

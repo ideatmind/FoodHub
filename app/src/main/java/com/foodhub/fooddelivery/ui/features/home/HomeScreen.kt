@@ -1,5 +1,8 @@
 package com.foodhub.fooddelivery.ui.features.home
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,8 +17,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -24,6 +27,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,46 +48,85 @@ import coil3.compose.AsyncImage
 import com.foodhub.fooddelivery.R
 import com.foodhub.fooddelivery.data.models.Category
 import com.foodhub.fooddelivery.data.models.Restaurant
+import com.foodhub.fooddelivery.ui.features.restaurant_details.FoodItemView
+import com.foodhub.fooddelivery.ui.features.restaurant_details.RestaurantDetails
+import com.foodhub.fooddelivery.ui.features.restaurant_details.RestaurantDetailsViewModel
+import com.foodhub.fooddelivery.ui.gridItems
+import com.foodhub.fooddelivery.ui.navigation.FoodDetails
+import com.foodhub.fooddelivery.ui.navigation.RestaurantDetails
 import com.foodhub.fooddelivery.ui.theme.AppColor
 import com.foodhub.fooddelivery.ui.theme.AppWhite
 import com.foodhub.fooddelivery.ui.theme.Typography
 import com.foodhub.fooddelivery.ui.theme.poppinsFontFamily
+import kotlinx.coroutines.flow.collectLatest
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltViewModel()) {
+fun SharedTransitionScope.HomeScreen(
+    navController: NavController,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    viewModel: HomeViewModel = hiltViewModel(),
+) {
 
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()) {
-            val uiState = viewModel.uiState.collectAsState()
-
-            when(uiState.value) {
-                is HomeViewModel.HomeScreenState.Loading -> {
-                    CircularProgressIndicator(color = AppWhite, modifier = Modifier.size(30.dp))
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent.collectLatest {
+            when (it) {
+                is HomeViewModel.HomeScreenNavigationEvent.NavigationToDetail -> {
+                    navController.navigate(
+                        RestaurantDetails(
+                            restaurantID = it.restaurantID,
+                            restaurantName = it.name,
+                            restaurantImage = it.imageUrl
+                        )
+                    )
                 }
-                is HomeViewModel.HomeScreenState.Empty -> {
-                    Text("Empty")
-                }
-                is HomeViewModel.HomeScreenState.Success -> {
-                    val categories = viewModel.categories
-                    val restaurants = viewModel.restaurants
-
-                    CategoriesList(categories = categories, onCategorySelected = {})
-                    RestaurantList(restaurants = restaurants, onRestaurantSelected = {})
-                }
-
-
+                else -> {}
             }
         }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+    ) {
+        val uiState = viewModel.uiState.collectAsState()
+
+        when (uiState.value) {
+            is HomeViewModel.HomeScreenState.Loading -> {
+                CircularProgressIndicator(color = AppWhite, modifier = Modifier.size(30.dp))
+            }
+
+            is HomeViewModel.HomeScreenState.Empty -> {
+                Text("Empty")
+            }
+
+            is HomeViewModel.HomeScreenState.Success -> {
+                val categories = viewModel.categories
+                val restaurants = viewModel.restaurants
+
+                CategoriesList(categories = categories, onCategorySelected = {})
+                RestaurantList(
+                    restaurants = restaurants, onRestaurantSelected = {
+                        viewModel.onRestaurantSelected(it)
+                    },
+                    animatedVisibilityScope = animatedVisibilityScope
+                )
+
+            }
+
+
+        }
+    }
 }
 
 @Composable
-fun CategoriesList(categories: List<Category>,onCategorySelected: (Category) -> Unit) {
-        LazyRow {
-            items(categories) {
-                CategoryItem(category = it, onCategorySelected = onCategorySelected)
-            }
+fun CategoriesList(categories: List<Category>, onCategorySelected: (Category) -> Unit) {
+    LazyRow {
+        items(categories) {
+            CategoryItem(category = it, onCategorySelected = onCategorySelected)
         }
+    }
 }
 
 @Composable
@@ -94,7 +137,7 @@ fun CategoryItem(category: Category, onCategorySelected: (Category) -> Unit) {
         .clickable {
             onCategorySelected(category)
         }
-        .shadow(9.dp, RoundedCornerShape(90.dp), ambientColor = AppColor, spotColor = AppColor)
+        .shadow(4.dp, RoundedCornerShape(90.dp), ambientColor = AppColor, spotColor = AppColor)
         .background(AppWhite)
         .clip(RoundedCornerShape(90.dp))
         .padding(8.dp),
@@ -120,16 +163,30 @@ fun CategoryItem(category: Category, onCategorySelected: (Category) -> Unit) {
     }
 }
 
+
+
+
+
+
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun RestaurantList(restaurants: List<Restaurant>,onRestaurantSelected: (Restaurant) -> Unit) {
+fun SharedTransitionScope.RestaurantList(
+    restaurants: List<Restaurant>,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    onRestaurantSelected: (Restaurant) -> Unit
+) {
     Column {
-        Row(modifier = Modifier.fillMaxWidth(),verticalAlignment = Alignment.CenterVertically, horizontalArrangement =  Arrangement.SpaceBetween) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             Text(
                 text = stringResource(R.string.popular_restaurants),
                 style = Typography.bodyLarge,
                 modifier = Modifier.padding(16.dp),
                 fontFamily = poppinsFontFamily,
-                color = Color.DarkGray
+                color = Color.Black
             )
             Spacer(Modifier.size(16.dp))
             TextButton(onClick = {
@@ -148,14 +205,20 @@ fun RestaurantList(restaurants: List<Restaurant>,onRestaurantSelected: (Restaura
         items(restaurants) {
             RestaurantItem(
                 restaurant = it,
-                onRestaurantSelected = onRestaurantSelected
+                onRestaurantSelected = onRestaurantSelected,
+                animatedVisibilityScope = animatedVisibilityScope,
             )
         }
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun RestaurantItem(restaurant: Restaurant, onRestaurantSelected: (Restaurant) -> Unit) {
+fun SharedTransitionScope.RestaurantItem(
+    restaurant: Restaurant,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    onRestaurantSelected: (Restaurant) -> Unit
+) {
     Box(
         modifier = Modifier
             .padding(8.dp)
@@ -164,7 +227,7 @@ fun RestaurantItem(restaurant: Restaurant, onRestaurantSelected: (Restaurant) ->
             .shadow(16.dp, shape = RoundedCornerShape(16.dp))
             .background(Color.White)
             .clip(RoundedCornerShape(16.dp))
-
+            .clickable { onRestaurantSelected(restaurant) }
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
@@ -172,21 +235,43 @@ fun RestaurantItem(restaurant: Restaurant, onRestaurantSelected: (Restaurant) ->
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxSize()
-                    .weight(1f),
+                    .weight(1f)
+                    .sharedElement(
+                        state = rememberSharedContentState(key = "image/${restaurant.id}"),
+                        animatedVisibilityScope = animatedVisibilityScope
+                    ),
                 contentScale = ContentScale.Crop
             )
 
-            Column(modifier = Modifier
-                .background(Color.White)
-                .padding(12.dp)
-                .clickable { onRestaurantSelected(restaurant) }) {
-                Text(
-                    text = restaurant.name,
-                    style = Typography.titleMedium,
-                    textAlign = TextAlign.Center,
-                    fontFamily = poppinsFontFamily
-                )
-                Row() {
+            Column(
+                modifier = Modifier
+                    .background(Color.White)
+                    .padding(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = restaurant.name,
+                        style = Typography.titleMedium,
+                        textAlign = TextAlign.Center,
+                        fontFamily = poppinsFontFamily,
+                        modifier = Modifier
+                            .sharedElement(
+                                state = rememberSharedContentState(key = "title/${restaurant.id}"),
+                                animatedVisibilityScope = animatedVisibilityScope
+                            )
+                    )
+                    Image(
+                        painter = painterResource(R.drawable.tick),
+                        modifier = Modifier
+                            .size(18.dp)
+                            .padding(horizontal = 2.dp),
+                        contentDescription = null
+                    )
+                }
+                Row {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
@@ -232,7 +317,10 @@ fun RestaurantItem(restaurant: Restaurant, onRestaurantSelected: (Restaurant) ->
                 .fillMaxWidth()
                 .align(Alignment.TopStart), verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 Row(
                     modifier = Modifier
                         .padding(8.dp)
@@ -260,7 +348,7 @@ fun RestaurantItem(restaurant: Restaurant, onRestaurantSelected: (Restaurant) ->
                 }
 
                 Image(
-                    painter = painterResource(R.drawable.heart_rating),
+                    painter = painterResource(R.drawable.favorites),
                     contentDescription = null,
                     modifier = Modifier
                         .height(65.dp)
